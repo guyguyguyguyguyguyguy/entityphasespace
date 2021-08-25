@@ -59,7 +59,6 @@ public class AgentBehaviour : MonoBehaviour
         newPos.y = newPos.y * 0.11f;
         newPos.z = newPos.z * 0.092f;
 
-        // TODO: Not working
         newPos += phasePosition;
 
         lineRend.SetPosition(frameNo - 1, newPos);

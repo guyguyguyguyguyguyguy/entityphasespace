@@ -12,6 +12,6 @@ public class Text : MonoBehaviour
     {
         guiStyle.fontSize = fontSize;
         guiStyle.normal.textColor = Color.white;
-        GUI.Label(new Rect(780, 13, 100, 20), "Phase Space", guiStyle);
+        GUI.Label(new Rect(820, 13, 100, 20), "Phase Space", guiStyle);
     }
 }

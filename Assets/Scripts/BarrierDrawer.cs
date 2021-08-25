@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HelperFuncs;
 
 public class BarrierDrawer : MonoBehaviour
 {
@@ -25,6 +26,7 @@ public class BarrierDrawer : MonoBehaviour
         // lastPosExists = false;
 
         edgeCol = gameObject.AddComponent<EdgeCollider2D>();
+        // TODO: alter bounciness and friction so agents dont slow down
         edgeColPoints = new List<Vector2>();
     }
 
@@ -44,16 +46,18 @@ public class BarrierDrawer : MonoBehaviour
 
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
+
+        if (ModelHelper.ClickInFrame(mousePos)) {
+            mousePos.z = -8;
+            pointsList.Add(mousePos);
+            line.positionCount = pointsList.Count;
+            line.SetPosition(pointsList.Count - 1, (Vector3)pointsList [pointsList.Count - 1]);
+
+            edgeColPoints.Add( (Vector2) mousePos );
+            edgeCol.SetPoints(edgeColPoints);
+        }
         
-        mousePos.z = -8;
-        pointsList.Add(mousePos);
-        line.positionCount = pointsList.Count;
-        line.SetPosition(pointsList.Count - 1, (Vector3)pointsList [pointsList.Count - 1]);
-
-        edgeColPoints.Add( (Vector2) mousePos );
-        edgeCol.SetPoints(edgeColPoints);
     }
-
 }
 
 

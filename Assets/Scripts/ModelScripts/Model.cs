@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using HelperFuncs;
 
 public class Model : MonoBehaviour
 {
     private Vector3[] phasePositions;
     private PhaseSpace phaseSpaceObj;
+    private Transform modelBorders;
+    private ModelHelper helper;
     private bool paused = false;
 
     public List<GameObject> Agents;
@@ -14,9 +17,17 @@ public class Model : MonoBehaviour
     public GameObject Barrier;
     public int NumberOfAgents;
 
+    private void Awake() 
+    {
+        modelBorders = GameObject.Find("Borders").transform;
+        // activates static constructor, now all modules can use modelhelper with the correct attributes
+        helper = new ModelHelper(modelBorders);
+    }
+
     // Start is called before the first frame update
     private void Start()
     {
+
         phaseSpaceObj = (PhaseSpace)FindObjectOfType(typeof(PhaseSpace));
         phasePositions = phaseSpaceObj.gridPositions;
 
@@ -50,8 +61,13 @@ public class Model : MonoBehaviour
         }
 
         if (Input.GetMouseButtonUp(0)) {
-            GameObject newAgent = AddAgent(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            AddToAgents(newAgent);
+
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+            if (ModelHelper.ClickInFrame(mousePos)) {
+                GameObject newAgent = AddAgent(mousePos);
+                AddToAgents(newAgent);
+            }
         }
 
         if (Input.GetMouseButtonDown(1))
