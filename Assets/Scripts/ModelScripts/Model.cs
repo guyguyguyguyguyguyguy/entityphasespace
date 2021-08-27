@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HelperFuncs;
+using Futuretraj;
 
 public class Model : MonoBehaviour
 {
@@ -22,6 +23,9 @@ public class Model : MonoBehaviour
         modelBorders = GameObject.Find("Borders").transform;
         // activates static constructor, now all modules can use modelhelper with the correct attributes
         helper = new ModelHelper(modelBorders);
+
+        float agentSize = ?
+        futureTraj = new CollisionModel(5000, agentSize);
     }
 
     // Start is called before the first frame update
@@ -133,6 +137,21 @@ public class Model : MonoBehaviour
     {
         Time.timeScale = 1;
         return false;
+    }
+
+
+    // Future trajectory stuff -> Get each agents future trajectory, give it to them and render in agentbehaviour
+    private void ProduceFutureTraj()
+    {
+        float[] currentState = new float[numAgents];
+
+        for(int i = 0; i < numAgents.Count; ++i)
+        {
+          GameObject a = Agents[i];
+          currentState[i] = a.transform.position;
+        }
+
+        futureTraj.GenerateModelAbstraction(currentState);
     }
 
 }
