@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HelperFuncs;
-using Futuretraj;
+using FutureTraj;
 
 public class Model : MonoBehaviour
 {
@@ -10,13 +10,16 @@ public class Model : MonoBehaviour
     private PhaseSpace phaseSpaceObj;
     private Transform modelBorders;
     private ModelHelper helper;
+    private CollisionModel futureTraj;
+    private float modelWidth;
+    private float modelHeight;
     private bool paused = false;
 
     public List<GameObject> Agents;
     public List<GameObject> Barriers;
     public GameObject Agent;
     public GameObject Barrier;
-    public int NumberOfAgents;
+    public int numberOfAgent;
 
     private void Awake() 
     {
@@ -24,8 +27,16 @@ public class Model : MonoBehaviour
         // activates static constructor, now all modules can use modelhelper with the correct attributes
         helper = new ModelHelper(modelBorders);
 
-        float agentSize = ?
-        futureTraj = new CollisionModel(5000, agentSize);
+        // agent size
+        SpriteRenderer agentRen = Agent.GetComponent<SpriteRenderer>();
+        float agentWidth = agentRen.bounds.size.x;
+        float agentHeight = agentRen.bounds.size.y;
+
+        // model width and height
+        modelWidth = ModelHelper.boundary.rightBound - ModelHelper.boundary.leftBound;
+        modelHeight = ModelHelper.boundary.topBound - ModelHelper.boundary.bottBound;
+
+        futureTraj = new CollisionModel(5000, agentWidth, agentHeight, modelWidth, ModelHelper.boundary.leftBound, modelHeight, ModelHelper.boundary.bottBound);
     }
 
     // Start is called before the first frame update
@@ -40,7 +51,7 @@ public class Model : MonoBehaviour
         for (int i = 0; i < Agents.Count; ++i)
         {
             GameObject agent = startingAgents.GetChild(i).gameObject;
-            agent.GetComponent<AgentBehaviour>().id = NumberOfAgents;
+            agent.GetComponent<AgentBehaviour>().id = numberOfAgent;
             agent.GetComponent<AgentBehaviour>().phasePosition = phasePositions[i];
         }
     }
@@ -50,7 +61,7 @@ public class Model : MonoBehaviour
     {
         PauseControl();
         CheckForMouseClick();
-        NumberOfAgents = Agents.Count;
+        numberOfAgent = Agents.Count;
     }
 
     private void FixedUpdate()
@@ -89,8 +100,8 @@ public class Model : MonoBehaviour
         GameObject newAgent = Instantiate(Agent, agentPos, Quaternion.identity) as GameObject;
         int numAgents = Agents.Count; 
         newAgent.name = "Agent " + (++numAgents).ToString();
-        newAgent.GetComponent<AgentBehaviour>().id = NumberOfAgents;
-        newAgent.GetComponent<AgentBehaviour>().phasePosition = phasePositions[NumberOfAgents];
+        newAgent.GetComponent<AgentBehaviour>().id = numberOfAgent;
+        newAgent.GetComponent<AgentBehaviour>().phasePosition = phasePositions[numberOfAgent];
 
 
         return newAgent;
@@ -130,6 +141,7 @@ public class Model : MonoBehaviour
     private bool PauseModel() 
     {
         Time.timeScale = 0;
+        ProduceFutureTraj();
         return true;
     }
 
@@ -143,15 +155,15 @@ public class Model : MonoBehaviour
     // Future trajectory stuff -> Get each agents future trajectory, give it to them and render in agentbehaviour
     private void ProduceFutureTraj()
     {
-        float[] currentState = new float[numAgents];
+        Vector3[] currentState = new Vector3[numberOfAgent];
 
-        for(int i = 0; i < numAgents.Count; ++i)
+        for(int i = 0; i < numberOfAgent; ++i)
         {
-          GameObject a = Agents[i];
-          currentState[i] = a.transform.position;
+            GameObject a = Agents[i];
+            currentState[i] = a.transform.position;
         }
 
-        futureTraj.GenerateModelAbstraction(currentState);
+        futureTraj.GenerateCurrentStepAbstraction(currentState);
     }
 
 }

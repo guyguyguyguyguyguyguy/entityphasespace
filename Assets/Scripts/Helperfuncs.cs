@@ -2,9 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.ComponentModel;
+using System;
 
 namespace HelperFuncs
 {
+
+    public static class ExtensionMethods
+    {
+        public static int RoundOff (this float i, int num)
+        {
+            return ((int)Math.Round(i / num)) * num;
+        }
+    }
 
     public class ModelHelper
     {
