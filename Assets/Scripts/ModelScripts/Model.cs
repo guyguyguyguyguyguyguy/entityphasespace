@@ -19,7 +19,7 @@ public class Model : MonoBehaviour
     public List<GameObject> Barriers;
     public GameObject Agent;
     public GameObject Barrier;
-    public int numberOfAgent;
+    public int numberOfAgents;
 
     private void Awake() 
     {
@@ -51,7 +51,7 @@ public class Model : MonoBehaviour
         for (int i = 0; i < Agents.Count; ++i)
         {
             GameObject agent = startingAgents.GetChild(i).gameObject;
-            agent.GetComponent<AgentBehaviour>().id = numberOfAgent;
+            agent.GetComponent<AgentBehaviour>().id = numberOfAgents;
             agent.GetComponent<AgentBehaviour>().phasePosition = phasePositions[i];
         }
     }
@@ -61,7 +61,7 @@ public class Model : MonoBehaviour
     {
         PauseControl();
         CheckForMouseClick();
-        numberOfAgent = Agents.Count;
+        numberOfAgents = Agents.Count;
     }
 
     private void FixedUpdate()
@@ -100,8 +100,8 @@ public class Model : MonoBehaviour
         GameObject newAgent = Instantiate(Agent, agentPos, Quaternion.identity) as GameObject;
         int numAgents = Agents.Count; 
         newAgent.name = "Agent " + (++numAgents).ToString();
-        newAgent.GetComponent<AgentBehaviour>().id = numberOfAgent;
-        newAgent.GetComponent<AgentBehaviour>().phasePosition = phasePositions[numberOfAgent];
+        newAgent.GetComponent<AgentBehaviour>().id = numberOfAgents;
+        newAgent.GetComponent<AgentBehaviour>().phasePosition = phasePositions[numberOfAgents];
 
 
         return newAgent;
@@ -155,15 +155,22 @@ public class Model : MonoBehaviour
     // Future trajectory stuff -> Get each agents future trajectory, give it to them and render in agentbehaviour
     private void ProduceFutureTraj()
     {
-        Vector3[] currentState = new Vector3[numberOfAgent];
+        Vector3[] currentState = new Vector3[numberOfAgents];
+        int[] ids = new int[numberOfAgents];
+        Vector2[] agentVels = new Vector2[numberOfAgents];
 
-        for(int i = 0; i < numberOfAgent; ++i)
+        for(int i = 0; i < numberOfAgents; ++i)
         {
             GameObject a = Agents[i];
             currentState[i] = a.transform.position;
+            ids[i] = a.GetComponent<AgentBehaviour>().id;
+
+            Rigidbody2D agentRb = a.GetComponent<Rigidbody2D>();
+            Vector2 agentVel = agentRb.velocity; 
+            agentVels[i] = agentVel;
         }
 
-        futureTraj.GenerateCurrentStepAbstraction(currentState);
+        futureTraj.FutureTrajectories(currentState, ids, agentVels);
     }
 
 }

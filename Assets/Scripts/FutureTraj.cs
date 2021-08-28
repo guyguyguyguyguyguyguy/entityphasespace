@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using HelperFuncs;
+using System;
 
 namespace FutureTraj 
 {
@@ -34,10 +35,10 @@ namespace FutureTraj
             Class for working out future trajectories in a model in which agents only collide with one another and the phase space is their 2d coordinates
         */
 
-        public struct Agent
+        public struct Agent 
         {
-          public float[] position;
-          public Vector2 velocity;
+            public Vector3 pos;
+            public Vector2 velocity;
         }
 
         private float agentWidth;
@@ -53,6 +54,33 @@ namespace FutureTraj
             agentWidth = aWidth;
             nStepsForward = nSteps;
             GenerateModelGrid(agentWidth, agentHeight, mWidth, left, mHeight, bott);
+        }
+
+        public Tuple<Trajectory[], float[]> FutureTrajectories(Vector3[] stateOfModel, int[] ids, Vector2[] agentVels)
+        {
+
+            Dictionary<string, int> modelAbstract = GenerateCurrentStepAbstraction(stateOfModel, ids);
+            Trajectory[] futureTrajOfAgents = new Trajectory[stateOfModel.Length];
+            float[] phaseSpaceAreas = new float[stateOfModel.Length];
+
+
+            for (int i = 0; i < stateOfModel.Length; ++i)
+            {
+                // remove each agent from dict, and then follow its course for nsteps using detect next collision and collision
+
+                Dictionary<string, int> modelWithoutAgent = StateOfModelWithoutAgent(modelAbstract, ids[i]);
+
+                Trajectory agentTraj = new Trajectory();
+                agentTraj.id = ids[i];
+                agentTraj.nStepsForward = nStepsForward;
+                agentTraj.trajectory = CalculateAgentTrajectory(modelWithoutAgent, stateOfModel[i], agentVels[i]);
+
+                float phaseArea = PhaseSpaceAreaApproximation(agentTraj.trajectory);
+                phaseSpaceAreas[i] = phaseArea;
+            }
+            
+            return Tuple.Create(futureTrajOfAgents, phaseSpaceAreas);
+
         }
 
         private void GenerateModelGrid(float agentWidth, float agentHeight, float modelWidth, float modelLeftPos, float modelHeight, float modelBottPos)
@@ -75,29 +103,30 @@ namespace FutureTraj
             }
         }
 
-        public Trajectory[] FutureTrajectory() 
-        {
-            
-            return new Trajectory[1];
-
-        }
-
-        public void GenerateCurrentStepAbstraction(Vector3[] stateOfModel)
+        public Dictionary<string, int> GenerateCurrentStepAbstraction(Vector3[] stateOfModel, int[] ids)
         {
             // Set cells with agent inside as 1
 
 
             //TODO: all agents apart from the agent we are looking at, need to change input and take agent to detect next colllision and track how many steps have passed between collisions so ensure all are carried out for same num of steps
 
-
             Dictionary<string, int> newDiscreteModel = new Dictionary<string, int>(discreteModel);
            
             // TODO: Seems should be rounded to agentwidth/2 also in GenerateModelGrid but it doesn't work yet ahh!!!!!!!!!
-            foreach(Vector3 pos in stateOfModel)
+            for (int i = 0; i < stateOfModel.Length; ++i)
             {
-                string agentGridPos = pos[0].RoundOff((int) agentWidth).ToString() + ", " + pos[1].RoundOff((int) agentHeight).ToString();
-                newDiscreteModel[agentGridPos] = 1;
+                string agentGridPos = stateOfModel[i][0].RoundOff((int) agentWidth).ToString() + ", " + stateOfModel[i][1].RoundOff((int) agentHeight).ToString();
+                newDiscreteModel[agentGridPos] = ids[i];
             }
+
+            return newDiscreteModel;
+        }
+
+        private Dictionary<string, int> StateOfModelWithoutAgent(Dictionary<string, int> totalModel, int id)
+        {
+
+            return new Dictionary<string, int>();
+
         }
         
         private void DetectNextCollision()
@@ -120,7 +149,13 @@ namespace FutureTraj
 
         }
 
-        private float PhaseSpaceAreaApproximation()
+        private Vector3[] CalculateAgentTrajectory(Dictionary<string, int> modelWithoutAgent, Vector3 pos, Vector2 vel)
+        {
+
+            return new Vector3[1];
+        }
+
+        private float PhaseSpaceAreaApproximation(Vector3[] agentTrak)
         {
            /*
             * Calculate approximate phase space area of the future trajectory:
