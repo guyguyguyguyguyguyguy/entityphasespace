@@ -39,6 +39,12 @@ namespace FutureTraj
         {
             public Vector3 pos;
             public Vector2 velocity;
+
+            public Agent(Vector3 p, Vector2 vel)
+            {
+                pos = p;
+                velocity = vel;
+            }
         }
 
         private float agentWidth;
@@ -59,7 +65,7 @@ namespace FutureTraj
         public Tuple<Trajectory[], float[]> FutureTrajectories(Vector3[] stateOfModel, int[] ids, Vector2[] agentVels)
         {
 
-            Dictionary<string, int> modelAbstract = GenerateCurrentStepAbstraction(stateOfModel, ids);
+            (Dictionary<string, int> modelAbstract, Dictionary<int, string> inverseModelAbstract) = GenerateCurrentStepAbstraction(stateOfModel, ids);
             Trajectory[] futureTrajOfAgents = new Trajectory[stateOfModel.Length];
             float[] phaseSpaceAreas = new float[stateOfModel.Length];
 
@@ -68,12 +74,13 @@ namespace FutureTraj
             {
                 // remove each agent from dict, and then follow its course for nsteps using detect next collision and collision
 
-                Dictionary<string, int> modelWithoutAgent = StateOfModelWithoutAgent(modelAbstract, ids[i]);
+                Dictionary<string, int> modelWithoutAgent = StateOfModelWithoutAgent(modelAbstract, inverseModelAbstract, ids[i]);
 
                 Trajectory agentTraj = new Trajectory();
                 agentTraj.id = ids[i];
                 agentTraj.nStepsForward = nStepsForward;
-                agentTraj.trajectory = CalculateAgentTrajectory(modelWithoutAgent, stateOfModel[i], agentVels[i]);
+                Agent agent = new Agent(stateOfModel[i], agentVels[i]);
+                agentTraj.trajectory = CalculateAgentTrajectory(modelWithoutAgent, agent);
 
                 float phaseArea = PhaseSpaceAreaApproximation(agentTraj.trajectory);
                 phaseSpaceAreas[i] = phaseArea;
@@ -88,8 +95,6 @@ namespace FutureTraj
             // Generate discrete model, with all possible cells added and set to 0
             // Each cell has dimensions of an agent and is normalised? and rounded for easy look-up for collision
             
-
-
             // TODO: Seems should be rounded to agentwidth/2 also in GenerateModelAbstraction but it doesn't work yet ahh!!!!!!!!!
             for (float i = modelLeftPos + (agentWidth/2); i < (modelLeftPos + modelWidth); i += agentWidth) 
             {
@@ -103,32 +108,41 @@ namespace FutureTraj
             }
         }
 
-        public Dictionary<string, int> GenerateCurrentStepAbstraction(Vector3[] stateOfModel, int[] ids)
+        public Tuple<Dictionary<string, int>, Dictionary<int, string>> GenerateCurrentStepAbstraction(Vector3[] stateOfModel, int[] ids)
         {
-            // Set cells with agent inside as 1
-
-
-            //TODO: all agents apart from the agent we are looking at, need to change input and take agent to detect next colllision and track how many steps have passed between collisions so ensure all are carried out for same num of steps
 
             Dictionary<string, int> newDiscreteModel = new Dictionary<string, int>(discreteModel);
+            Dictionary<int, string> inverseNewDiscreteModel = new Dictionary<int, string>(); 
            
             // TODO: Seems should be rounded to agentwidth/2 also in GenerateModelGrid but it doesn't work yet ahh!!!!!!!!!
             for (int i = 0; i < stateOfModel.Length; ++i)
             {
                 string agentGridPos = stateOfModel[i][0].RoundOff((int) agentWidth).ToString() + ", " + stateOfModel[i][1].RoundOff((int) agentHeight).ToString();
                 newDiscreteModel[agentGridPos] = ids[i];
+                inverseNewDiscreteModel[ids[i]] = agentGridPos;
             }
 
-            return newDiscreteModel;
+            return Tuple.Create(newDiscreteModel, inverseNewDiscreteModel);
         }
 
-        private Dictionary<string, int> StateOfModelWithoutAgent(Dictionary<string, int> totalModel, int id)
+        private Dictionary<string, int> StateOfModelWithoutAgent(Dictionary<string, int> totalModel, Dictionary<int, string> inverseTotalModel, int id)
         {
+            // remove current agent from abstractModel
+            Dictionary<string, int> modelSinAgent = new Dictionary<string, int>(totalModel);
 
-            return new Dictionary<string, int>();
+            modelSinAgent[inverseTotalModel[id]] = 0;
+
+            return modelSinAgent;
 
         }
         
+        private Vector3[] CalculateAgentTrajectory(Dictionary<string, int> modelWithoutAgent, Agent agent)
+        {
+
+
+            return new Vector3[1];
+        }
+
         private void DetectNextCollision()
         {
            /* 
@@ -147,12 +161,6 @@ namespace FutureTraj
 
             return Vector2.zero;
 
-        }
-
-        private Vector3[] CalculateAgentTrajectory(Dictionary<string, int> modelWithoutAgent, Vector3 pos, Vector2 vel)
-        {
-
-            return new Vector3[1];
         }
 
         private float PhaseSpaceAreaApproximation(Vector3[] agentTrak)
