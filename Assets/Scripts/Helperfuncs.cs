@@ -13,6 +13,11 @@ namespace HelperFuncs
         {
             return ((int)Math.Round(i / num)) * num;
         }
+
+        public static int RoundOff (this int i, int num)
+        {
+            return ((int)Math.Round((float) (i / num))) * num;
+        }
     }
 
     public class ModelHelper

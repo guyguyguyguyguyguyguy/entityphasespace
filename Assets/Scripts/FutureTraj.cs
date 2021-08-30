@@ -92,7 +92,7 @@ namespace FutureTraj
 
         private void GenerateModelGrid(float agentWidth, float agentHeight, float modelWidth, float modelLeftPos, float modelHeight, float modelBottPos)
         {
-            // Generate discrete model, with all possible cells added and set to 0
+            // Generate discrete model, with all possible cells added and set to -1
             // Each cell has dimensions of an agent and is normalised? and rounded for easy look-up for collision
             
             // TODO: Seems should be rounded to agentwidth/2 also in GenerateModelAbstraction but it doesn't work yet ahh!!!!!!!!!
@@ -103,7 +103,7 @@ namespace FutureTraj
                     float xCoor = i.RoundOff((int) agentWidth);
                     float yCoor = j.RoundOff((int) agentHeight);
                     string key = xCoor.ToString() + ", " + yCoor.ToString();
-                    discreteModel.Add(key, 0);
+                    discreteModel.Add(key, -1);
                 }
             }
         }
@@ -138,28 +138,47 @@ namespace FutureTraj
         
         private Vector3[] CalculateAgentTrajectory(Dictionary<string, int> modelWithoutAgent, Agent agent)
         {
+            int steps = 0;
+            Vector3[] trajectory = new Vector3[nStepsForward];
 
+            do {
+                agent.pos += ((Vector3) agent.velocity / (1.0f / Time.deltaTime));
+                string currentAgentCell = agent.pos[0].RoundOff((int) agentWidth).ToString() + ", " + agent.pos[1].RoundOff((int) agentHeight).ToString();
+
+                int dictValue;
+                // returns 0 if key is not found
+                modelWithoutAgent.TryGetValue(currentAgentCell, out dictValue);
+
+                // Implicit way of detecting barrier collision??
+                if (dictValue == 0) {
+                    BarrierCollision(ref agent);
+                    ++steps;
+                } else if (dictValue > 0) {
+                    AgentCollision(ref agent);
+                    ++steps;
+                }
+                ++steps;
+            } while (steps.RoundOff(5) != 10); // Roundoff is ugllyyy but needed as sometimes steps goes up by 1 and sometimes by 2 -> means cannot know what number it'll skip over
 
             return new Vector3[1];
         }
 
-        private void DetectNextCollision()
+        private void BarrierCollision(ref Agent a)
         {
-           /* 
-            * Here we 'skip' steps in the simulation and skip until next collision event:
-            *  -> dont need to include positions/steps in which no collision occurs, just the position at end of last collision and start of next
-            */   
+            Debug.Log("I am in barrier collision yeahhh");
+
 
 
         }
 
-        private Vector2 Collision(Agent a, float[] environment) 
+        private void AgentCollision(ref Agent a) 
         {
-           /* Collision of agent with an element in model abstraction grid:
-            *  -> returns agent velocity post-collision
+           /* Collision of agent with a circle at the position the agent is at -> a.pos
+            *  -> alters reference to the agent
             */
+            
+            Debug.Log("i am in agent collision, madddd!");
 
-            return Vector2.zero;
 
         }
 

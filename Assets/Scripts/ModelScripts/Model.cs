@@ -36,7 +36,7 @@ public class Model : MonoBehaviour
         modelWidth = ModelHelper.boundary.rightBound - ModelHelper.boundary.leftBound;
         modelHeight = ModelHelper.boundary.topBound - ModelHelper.boundary.bottBound;
 
-        futureTraj = new CollisionModel(5000, agentWidth, agentHeight, modelWidth, ModelHelper.boundary.leftBound, modelHeight, ModelHelper.boundary.bottBound);
+        futureTraj = new CollisionModel(5, agentWidth, agentHeight, modelWidth, ModelHelper.boundary.leftBound, modelHeight, ModelHelper.boundary.bottBound);
     }
 
     // Start is called before the first frame update
