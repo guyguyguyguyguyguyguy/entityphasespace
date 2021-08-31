@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using HelperFuncs;
 using System;
+using PhaseSpcaeAlgorithms;
 
 namespace FutureTraj 
 {
@@ -238,9 +239,9 @@ namespace FutureTraj
             *   -> If significance difference, then emergence appears to have occured
             */
 
+            float agentTrajPhaseSpace = PhaseSpcaeAlgorithms.ChansAlgorithm.ConvexHull(agentTraj);
 
-
-            return 0.0f;
+            return agentTrajPhaseSpace;
 
         }
     }
