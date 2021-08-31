@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 using HelperFuncs;
 using FutureTraj;
 
@@ -14,6 +15,7 @@ public class Model : MonoBehaviour
     private float modelWidth;
     private float modelHeight;
     private bool paused = false;
+    private int predSteps = 90;
 
     public List<GameObject> Agents;
     public List<GameObject> Barriers;
@@ -36,7 +38,7 @@ public class Model : MonoBehaviour
         modelWidth = ModelHelper.boundary.rightBound - ModelHelper.boundary.leftBound;
         modelHeight = ModelHelper.boundary.topBound - ModelHelper.boundary.bottBound;
 
-        futureTraj = new CollisionModel(5, agentWidth, agentHeight, modelWidth, ModelHelper.boundary.leftBound, modelHeight, ModelHelper.boundary.bottBound);
+        futureTraj = new CollisionModel(predSteps, agentWidth, agentHeight, modelWidth, ModelHelper.boundary.leftBound, modelHeight, ModelHelper.boundary.bottBound);
     }
 
     // Start is called before the first frame update
@@ -153,6 +155,7 @@ public class Model : MonoBehaviour
 
 
     // Future trajectory stuff -> Get each agents future trajectory, give it to them and render in agentbehaviour
+    // Want a way to compare projected future trajectory vs the actual trajectory
     private void ProduceFutureTraj()
     {
         Vector3[] currentState = new Vector3[numberOfAgents];
@@ -170,7 +173,31 @@ public class Model : MonoBehaviour
             agentVels[i] = agentVel;
         }
 
-        futureTraj.FutureTrajectories(currentState, ids, agentVels);
+        (FutureTraj.Trajectory[] agentTrajectories, float[] phaseSpaceSize) = futureTraj.FutureTrajectories(currentState, ids, agentVels);
+
+        for (int i = 0; i < numberOfAgents; ++i)
+        {
+            GameObject a = Agents[i];
+            Vector3[] vers = new Vector3[predSteps];
+
+            a.GetComponent<AgentBehaviour>().lineRend.positionCount = 0;
+            a.GetComponent<AgentBehaviour>().lineRend.positionCount = predSteps;
+
+            for (int j = 0; j < predSteps; ++j)
+            {
+                Vector3 v = agentTrajectories[i].trajectory[j];
+
+                // This is for putting trajectory in the phase space box
+                // v.x = v.x * 0.092f;
+                // v.y = v.y * 0.11f;
+                // v.z = v.z * 0.092f;
+
+                // v += a.GetComponent<AgentBehaviour>().phasePosition;
+
+                a.GetComponent<AgentBehaviour>().lineRend.SetPosition(j, v);
+
+            }   
+        }
     }
 
 }

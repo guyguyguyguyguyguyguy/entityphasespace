@@ -47,9 +47,27 @@ namespace FutureTraj
             }
         }
 
+        public struct Bounds
+        {
+            public float left;
+            public float right;
+            public float bott;
+            public float top;
+
+            public Bounds(float l, float r, float b, float t)
+            {
+                left = l;
+                right = r;
+                bott = b;
+                top = t;
+            }
+        }
+
         private float agentWidth;
         private float agentHeight;
-        static public int nStepsForward;
+        private Bounds modelBounds;
+        private float phaseSpaceArea;
+        public static int nStepsForward;
         // Dictionary representing discritisation of model into agent-sized cells -> 1 represents there is an object in that cells, 0 it is empty
         // Coarse graining each agent from circle to square (should be okay for starts)
         public Dictionary<string, int> discreteModel = new Dictionary<string, int>(); 
@@ -59,6 +77,8 @@ namespace FutureTraj
             agentHeight = aHeight;
             agentWidth = aWidth;
             nStepsForward = nSteps;
+            modelBounds = new Bounds(left, left + mWidth, bott, bott + mHeight);
+            phaseSpaceArea = mWidth * mHeight;
             GenerateModelGrid(agentWidth, agentHeight, mWidth, left, mHeight, bott);
         }
 
@@ -67,7 +87,7 @@ namespace FutureTraj
 
             (Dictionary<string, int> modelAbstract, Dictionary<int, string> inverseModelAbstract) = GenerateCurrentStepAbstraction(stateOfModel, ids);
             Trajectory[] futureTrajOfAgents = new Trajectory[stateOfModel.Length];
-            float[] phaseSpaceAreas = new float[stateOfModel.Length];
+            float[] phaseApproxs = new float[stateOfModel.Length];
 
 
             for (int i = 0; i < stateOfModel.Length; ++i)
@@ -82,26 +102,28 @@ namespace FutureTraj
                 Agent agent = new Agent(stateOfModel[i], agentVels[i]);
                 agentTraj.trajectory = CalculateAgentTrajectory(modelWithoutAgent, agent);
 
-                float phaseArea = PhaseSpaceAreaApproximation(agentTraj.trajectory);
-                phaseSpaceAreas[i] = phaseArea;
+                futureTrajOfAgents[i] = agentTraj;
+
+                float phaseApprox = PhaseSpaceAreaApproximation(agentTraj.trajectory);
+                phaseApproxs[i] = phaseApprox;
             }
             
-            return Tuple.Create(futureTrajOfAgents, phaseSpaceAreas);
+            return Tuple.Create(futureTrajOfAgents, phaseApproxs);
 
         }
 
         private void GenerateModelGrid(float agentWidth, float agentHeight, float modelWidth, float modelLeftPos, float modelHeight, float modelBottPos)
         {
             // Generate discrete model, with all possible cells added and set to -1
-            // Each cell has dimensions of an agent and is normalised? and rounded for easy look-up for collision
+            // Each cell is size of 2 agents -> approximate collision
             
             // TODO: Seems should be rounded to agentwidth/2 also in GenerateModelAbstraction but it doesn't work yet ahh!!!!!!!!!
-            for (float i = modelLeftPos + (agentWidth/2); i < (modelLeftPos + modelWidth); i += agentWidth) 
+            for (float i = modelLeftPos + agentWidth; i < (modelLeftPos + modelWidth); i += (2*agentWidth)) 
             {
-                for (float j = modelBottPos + (agentHeight/2); j < (modelBottPos + modelHeight); j += agentHeight)
+                for (float j = modelBottPos + agentHeight; j < (modelBottPos + modelHeight); j += (2*agentHeight))
                 {
-                    float xCoor = i.RoundOff((int) agentWidth);
-                    float yCoor = j.RoundOff((int) agentHeight);
+                    float xCoor = i.RoundOff((int) (2*agentWidth));
+                    float yCoor = j.RoundOff((int) (2*agentHeight));
                     string key = xCoor.ToString() + ", " + yCoor.ToString();
                     discreteModel.Add(key, -1);
                 }
@@ -117,7 +139,7 @@ namespace FutureTraj
             // TODO: Seems should be rounded to agentwidth/2 also in GenerateModelGrid but it doesn't work yet ahh!!!!!!!!!
             for (int i = 0; i < stateOfModel.Length; ++i)
             {
-                string agentGridPos = stateOfModel[i][0].RoundOff((int) agentWidth).ToString() + ", " + stateOfModel[i][1].RoundOff((int) agentHeight).ToString();
+                string agentGridPos = stateOfModel[i][0].RoundOff((int) (2*agentWidth)).ToString() + ", " + stateOfModel[i][1].RoundOff((int) (2*agentHeight)).ToString();
                 newDiscreteModel[agentGridPos] = ids[i];
                 inverseNewDiscreteModel[ids[i]] = agentGridPos;
             }
@@ -143,46 +165,67 @@ namespace FutureTraj
 
             do {
                 agent.pos += ((Vector3) agent.velocity / (1.0f / Time.deltaTime));
-                string currentAgentCell = agent.pos[0].RoundOff((int) agentWidth).ToString() + ", " + agent.pos[1].RoundOff((int) agentHeight).ToString();
+                string currentAgentCell = agent.pos[0].RoundOff((int) (2*agentWidth)).ToString() + ", " + agent.pos[1].RoundOff((int) (2*agentHeight)).ToString();
 
+                trajectory[steps] = agent.pos;
+                
                 int dictValue;
                 // returns 0 if key is not found
+                // TODO: Get multiple collision with agents as the cells are large, how to solve???
                 modelWithoutAgent.TryGetValue(currentAgentCell, out dictValue);
 
-                // Implicit way of detecting barrier collision??
+                // Implicitly detect barrier collision
                 if (dictValue == 0) {
+                    ++steps;
+                    if (steps == nStepsForward)
+                    {
+                        break;
+                    }
                     BarrierCollision(ref agent);
-                    ++steps;
+                    trajectory[steps] = agent.pos;
                 } else if (dictValue > 0) {
-                    AgentCollision(ref agent);
                     ++steps;
-                }
+                    if (steps == nStepsForward)
+                    {
+                        break;
+                    }
+                    AgentCollision(ref agent);
+                    trajectory[steps] = agent.pos;
+                } 
                 ++steps;
-            } while (steps.RoundOff(5) != 10); // Roundoff is ugllyyy but needed as sometimes steps goes up by 1 and sometimes by 2 -> means cannot know what number it'll skip over
+                // TODO:fix this while condition
+            } while (steps != nStepsForward); // Roundoff is ugllyyy but needed as sometimes steps goes up by 1 and sometimes by 2 -> means cannot know what number it'll skip over
 
-            return new Vector3[1];
+            return trajectory;
         }
 
         private void BarrierCollision(ref Agent a)
         {
-            Debug.Log("I am in barrier collision yeahhh");
-
-
-
+            if (a.pos.x < modelBounds.left || a.pos.x > modelBounds.right) {
+                a.velocity.x *= -1;
+            } else if (a.pos.y < modelBounds.bott || a.pos.y > modelBounds.top) {
+                a.velocity.y *= -1;
+            }
         }
 
+        // Seems to work quite well
         private void AgentCollision(ref Agent a) 
         {
            /* Collision of agent with a circle at the position the agent is at -> a.pos
             *  -> alters reference to the agent
             */
             
-            Debug.Log("i am in agent collision, madddd!");
-
+            Vector2 prevPos = a.pos - ((Vector3) a.velocity);
+            if (prevPos.x < a.pos.x.RoundOff((int) (2*agentWidth)) || prevPos.x > a.pos.x.RoundOff((int) (2*agentWidth)))
+            {
+                a.velocity.x *= -1;
+            } else if (prevPos.y < a.pos.y.RoundOff((int) (2*agentHeight)) || prevPos.y > a.pos.y.RoundOff((int) (2*agentHeight))) {
+                a.velocity.y *= -1;
+            }
 
         }
 
-        private float PhaseSpaceAreaApproximation(Vector3[] agentTrak)
+        private float PhaseSpaceAreaApproximation(Vector3[] agentTraj)
         {
            /*
             * Calculate approximate phase space area of the future trajectory:
@@ -194,6 +237,7 @@ namespace FutureTraj
             * Used to compare against 'total' phase space (the whole model):
             *   -> If significance difference, then emergence appears to have occured
             */
+
 
 
             return 0.0f;

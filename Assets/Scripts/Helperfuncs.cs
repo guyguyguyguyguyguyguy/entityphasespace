@@ -11,12 +11,12 @@ namespace HelperFuncs
     {
         public static int RoundOff (this float i, int num)
         {
-            return ((int)Math.Round(i / num)) * num;
+            return ((int)Math.Floor(i / num)) * num;
         }
 
         public static int RoundOff (this int i, int num)
         {
-            return ((int)Math.Round((float) (i / num))) * num;
+            return ((int)Math.Floor((float) (i / num))) * num;
         }
     }
 

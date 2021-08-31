@@ -8,7 +8,7 @@ public class AgentBehaviour : MonoBehaviour
     private bool collided;
     private Vector2 initialVel;
     private Rigidbody2D rb;
-    private LineRenderer lineRend;
+    public LineRenderer lineRend;
 
     private Color red = Color.red;
     private int frameNo = 1;
@@ -36,8 +36,8 @@ public class AgentBehaviour : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        UpdatePath(this.transform.position);
-        ++frameNo;
+        // UpdatePath(this.transform.position);
+        // ++frameNo;
     }
 
     private void FixedUpdate()
