@@ -8,13 +8,13 @@ public class AgentBehaviour : MonoBehaviour
     private bool collided;
     private Vector2 initialVel;
     private Rigidbody2D rb;
-    public LineRenderer lineRend;
 
     private Color red = Color.red;
     private int frameNo = 1;
 
     public int id;
     public Vector3 phasePosition;
+    public LineRenderer lineRend;
     public int speedFactor = 1000;
 
     // Start is called before the first frame update
@@ -37,7 +37,7 @@ public class AgentBehaviour : MonoBehaviour
     private void Update()
     {
         // UpdatePath(this.transform.position);
-        // ++frameNo;
+        ++frameNo;
     }
 
     private void FixedUpdate()

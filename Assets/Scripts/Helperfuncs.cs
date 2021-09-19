@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.ComponentModel;
 using System;
+using System.Linq;
 
 namespace HelperFuncs
 {
@@ -18,6 +19,21 @@ namespace HelperFuncs
         {
             return ((int)Math.Floor((float) (i / num))) * num;
         }
+
+
+        public static Vector3 GetLeftMost(Vector3[] vs)
+        {
+            Vector3 leftMost = Vector3.positiveInfinity;
+
+            foreach(Vector3 v in vs)
+            {
+                if (v.x < leftMost.x)
+                    leftMost = v;
+            }
+
+            return leftMost;
+        }
+
     }
 
     public class ModelHelper
@@ -79,7 +95,23 @@ namespace HelperFuncs
                         throw new InvalidEnumArgumentException();
                 }
             }
-            
+        }
+
+        public static double PolygonArea(Vector3[] points)
+        {
+            double area = 0;
+            int j = points.Length - 1;
+
+            float[] xs = (float[]) points.Select(p => p.x).ToArray();
+            float[] ys = (float[]) points.Select(p => p.y).ToArray();
+
+            for (int i = 0; i < points.Length; ++i)
+            {
+                area += (xs[j] + xs[i]) * (ys[j] - ys[i]);
+                j = i;
+            }
+
+            return area / 2;
         }
     }
 }

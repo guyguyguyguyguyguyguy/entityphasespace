@@ -172,7 +172,7 @@ MonoBehaviour:
   Barriers: []
   Agent: {fileID: 8641571892978631845, guid: c69a56b40e65aae56b02d935e36cb6e3, type: 3}
   Barrier: {fileID: 4117234432253284793, guid: 24e95f50aa49e51c1a8a2bbb155ae417, type: 3}
-  numberOfAgent: 0
+  numberOfAgents: 0
 --- !u!4 &136502096
 Transform:
   m_ObjectHideFlags: 0
@@ -1175,6 +1175,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 474693475}
     m_Modifications:
+    - target: {fileID: 8641571892978631841, guid: c69a56b40e65aae56b02d935e36cb6e3, type: 3}
+      propertyPath: m_Radius
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8641571892978631842, guid: c69a56b40e65aae56b02d935e36cb6e3, type: 3}
       propertyPath: m_LocalPosition.x
       value: -93

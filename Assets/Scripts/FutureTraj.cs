@@ -83,12 +83,13 @@ namespace FutureTraj
             GenerateModelGrid(agentWidth, agentHeight, mWidth, left, mHeight, bott);
         }
 
-        public Tuple<Trajectory[], float[]> FutureTrajectories(Vector3[] stateOfModel, int[] ids, Vector2[] agentVels)
+        public (Trajectory[], Vector3[][]) FutureTrajectories(Vector3[] stateOfModel, int[] ids, Vector2[] agentVels)
         {
 
             (Dictionary<string, int> modelAbstract, Dictionary<int, string> inverseModelAbstract) = GenerateCurrentStepAbstraction(stateOfModel, ids);
             Trajectory[] futureTrajOfAgents = new Trajectory[stateOfModel.Length];
             float[] phaseApproxs = new float[stateOfModel.Length];
+            Vector3[][] futureVec = new Vector3[stateOfModel.Length][];
 
 
             for (int i = 0; i < stateOfModel.Length; ++i)
@@ -101,15 +102,14 @@ namespace FutureTraj
                 agentTraj.id = ids[i];
                 agentTraj.nStepsForward = nStepsForward;
                 Agent agent = new Agent(stateOfModel[i], agentVels[i]);
-                agentTraj.trajectory = CalculateAgentTrajectory(modelWithoutAgent, agent);
-
+                Vector3[] traj = CalculateAgentTrajectory(modelWithoutAgent, agent);
+                agentTraj.trajectory = traj;
+                futureVec[i] = traj;
+                
                 futureTrajOfAgents[i] = agentTraj;
-
-                float phaseApprox = PhaseSpaceAreaApproximation(agentTraj.trajectory);
-                phaseApproxs[i] = phaseApprox;
             }
             
-            return Tuple.Create(futureTrajOfAgents, phaseApproxs);
+            return (futureTrajOfAgents, futureVec);
 
         }
 
@@ -225,25 +225,5 @@ namespace FutureTraj
             }
 
         }
-
-        private float PhaseSpaceAreaApproximation(Vector3[] agentTraj)
-        {
-           /*
-            * Calculate approximate phase space area of the future trajectory:
-            *   -> Take square approx of phase space area by taking the leftmost and rightmost x values, and topmost/bottommost y value
-            *   -> float area = (rightmost - leftmost) * (bottommost - topmost) // As cartisian coordinates so y is flipped
-            *
-            *  This gives upper-bound of possible future phase space
-            *
-            * Used to compare against 'total' phase space (the whole model):
-            *   -> If significance difference, then emergence appears to have occured
-            */
-
-            float agentTrajPhaseSpace = PhaseSpcaeAlgorithms.ChansAlgorithm.ConvexHull(agentTraj);
-
-            return agentTrajPhaseSpace;
-
-        }
     }
-
 }

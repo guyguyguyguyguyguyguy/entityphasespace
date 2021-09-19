@@ -15,7 +15,7 @@ public class Model : MonoBehaviour
     private float modelWidth;
     private float modelHeight;
     private bool paused = false;
-    private int predSteps = 90;
+    private int predSteps = 1000;
 
     public List<GameObject> Agents;
     public List<GameObject> Barriers;
@@ -156,7 +156,7 @@ public class Model : MonoBehaviour
 
     // Future trajectory stuff -> Get each agents future trajectory, give it to them and render in agentbehaviour
     // Want a way to compare projected future trajectory vs the actual trajectory
-    private void ProduceFutureTraj()
+    private (FutureTraj.Trajectory[], Vector3[][]) ProduceFutureTraj()
     {
         Vector3[] currentState = new Vector3[numberOfAgents];
         int[] ids = new int[numberOfAgents];
@@ -173,8 +173,16 @@ public class Model : MonoBehaviour
             agentVels[i] = agentVel;
         }
 
-        (FutureTraj.Trajectory[] agentTrajectories, float[] phaseSpaceSize) = futureTraj.FutureTrajectories(currentState, ids, agentVels);
+        (FutureTraj.Trajectory[] agentTrajectories, Vector3[][] futureVects) = futureTraj.FutureTrajectories(currentState, ids, agentVels);
 
+        RenderTrajInSpace(futureVects);
+
+        return (agentTrajectories, futureVects);
+    }
+
+
+    private void RenderTrajInSpace(Vector3[][] futureVects)
+    {
         for (int i = 0; i < numberOfAgents; ++i)
         {
             GameObject a = Agents[i];
@@ -185,14 +193,14 @@ public class Model : MonoBehaviour
 
             for (int j = 0; j < predSteps; ++j)
             {
-                Vector3 v = agentTrajectories[i].trajectory[j];
+                Vector3 v = futureVects[i][j];
 
                 // This is for putting trajectory in the phase space box
-                // v.x = v.x * 0.092f;
-                // v.y = v.y * 0.11f;
-                // v.z = v.z * 0.092f;
+                v.x = v.x * 0.092f;
+                v.y = v.y * 0.11f;
+                v.z = v.z * 0.092f;
 
-                // v += a.GetComponent<AgentBehaviour>().phasePosition;
+                v += a.GetComponent<AgentBehaviour>().phasePosition;
 
                 a.GetComponent<AgentBehaviour>().lineRend.SetPosition(j, v);
 
@@ -200,4 +208,25 @@ public class Model : MonoBehaviour
         }
     }
 
+    private void EmergenceDetection() 
+    {
+        (FutureTraj.Trajectory[] agentTrajectories, Vector3[][] agentFutureVec) = ProduceFutureTraj();
+
+        for (int i = 0; i < numberOfAgents; ++i)
+        {
+            Vector3[] agentConvexHull = PhaseSpcaeAlgorithms.ChansAlgorithm.ConvexHull(agentFutureVec[i]);
+            double convexHullArea = ModelHelper.PolygonArea(agentConvexHull);
+            EmergenceTest(convexHullArea, i);
+        }
+    }
+
+    private void EmergenceTest(double area, int id)
+    {
+
+    }
+
+    private void RenderConvexHull(Vector3 vs)
+    {
+
+    }
 }
