@@ -69,7 +69,8 @@ namespace PhaseSpcaeAlgorithms
             Vector3[] leftOverPoints = (Vector3[]) points.Clone();
             List<Vector3> convexHull = new List<Vector3>();
             Vector3 prevPoint = Vector3.zero;
-            prevPoint.x = int.MinValue;
+            // as y is flipped
+            prevPoint.x = int.MaxValue;
 
             Vector3 currPoint = ExtensionMethods.GetLeftMost(points);
             convexHull.Add(currPoint);
@@ -128,6 +129,7 @@ namespace PhaseSpcaeAlgorithms
             return nextP;
         }
 
+        // TODO: y is flipped so need to sort
         private static double AngleCal(Vector3 p, Vector3 q, Vector3 r)
         {
             double val = Math.Atan2(q.y - p.x, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
@@ -175,6 +177,7 @@ namespace PhaseSpcaeAlgorithms
             return gConvexHull;
         }
 
+        // y is flipped so need to sort
         private static bool Ccw(Vector3 a, Vector3 b, Vector3 c)
         {
             return ((b.x - a.x) * (c.y - a.y)) > ((b.y - a.y) * (c.x - a.x));

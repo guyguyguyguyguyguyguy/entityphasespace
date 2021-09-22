@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 using HelperFuncs;
 using FutureTraj;
 
@@ -15,12 +16,13 @@ public class Model : MonoBehaviour
     private float modelWidth;
     private float modelHeight;
     private bool paused = false;
-    private int predSteps = 1000;
+    private int predSteps = 100;
 
     public List<GameObject> Agents;
     public List<GameObject> Barriers;
     public GameObject Agent;
     public GameObject Barrier;
+    public GameObject HullPrefab;
     public int numberOfAgents;
 
     private void Awake() 
@@ -143,7 +145,8 @@ public class Model : MonoBehaviour
     private bool PauseModel() 
     {
         Time.timeScale = 0;
-        ProduceFutureTraj();
+        // ProduceFutureTraj();
+        EmergenceDetection();
         return true;
     }
 
@@ -175,7 +178,6 @@ public class Model : MonoBehaviour
 
         (FutureTraj.Trajectory[] agentTrajectories, Vector3[][] futureVects) = futureTraj.FutureTrajectories(currentState, ids, agentVels);
 
-        RenderTrajInSpace(futureVects);
 
         return (agentTrajectories, futureVects);
     }
@@ -210,13 +212,24 @@ public class Model : MonoBehaviour
 
     private void EmergenceDetection() 
     {
-        (FutureTraj.Trajectory[] agentTrajectories, Vector3[][] agentFutureVec) = ProduceFutureTraj();
+        (FutureTraj.Trajectory[] agentTrajectories, Vector3[][] agentFutureVecs) = ProduceFutureTraj();
 
-        for (int i = 0; i < numberOfAgents; ++i)
+        // RenderTrajInSpace(agentFutureVecs);
+
+        using(System.IO.StreamWriter file = new System.IO.StreamWriter("text.csv"))
         {
-            Vector3[] agentConvexHull = PhaseSpcaeAlgorithms.ChansAlgorithm.ConvexHull(agentFutureVec[i]);
-            double convexHullArea = ModelHelper.PolygonArea(agentConvexHull);
-            EmergenceTest(convexHullArea, i);
+            for (int i = 0; i < numberOfAgents; ++i)
+            {
+                Vector3[] agentConvexHull = PhaseSpcaeAlgorithms.ChansAlgorithm.ConvexHull(agentFutureVecs[i]);
+                double convexHullArea = ModelHelper.PolygonArea(agentConvexHull);
+                RenderConvexHull(agentConvexHull, i);
+                EmergenceTest(convexHullArea, i);
+
+                file.Write(string.Join("\n", agentConvexHull.Select(p => (p.x, p.y))));
+                file.Write("\n, \n");
+                file.Write(string.Join("\n", agentFutureVecs[i].Select(p => (p.x, p.y))));
+                file.Write("\n, \n");
+            }
         }
     }
 
@@ -225,8 +238,36 @@ public class Model : MonoBehaviour
 
     }
 
-    private void RenderConvexHull(Vector3 vs)
+    private void RenderConvexHull(Vector3[] vs, int id)
     {
+        GameObject hull = GameObject.Find("ConvexHull" + id.ToString());
+        LineRenderer l;
 
+        // This if condition does not work?
+        if (hull == null) {
+            GameObject newHull = Instantiate(HullPrefab, Vector3.zero, Quaternion.identity) as GameObject;
+            newHull.name = "ConvexHull " + id.ToString();
+            newHull.transform.parent = this.transform.GetChild(4);
+
+            l = newHull.GetComponent<LineRenderer>();
+        } else {
+            l = hull.GetComponent<LineRenderer>();
+        }
+
+        l.positionCount = vs.Length;
+
+        Vector3 phasePos = phasePositions[id];
+        
+        for (int i = 0; i < vs.Length; ++i)
+        {
+            Vector3 v = vs[i];
+
+            v.x = v.x * 0.092f;
+            v.y = v.y * 0.11f;
+            v.z = v.z * 0.092f;
+
+            v += phasePos; 
+            l.SetPosition(i, v);
+        }
     }
 }

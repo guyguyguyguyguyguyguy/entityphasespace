@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using HelperFuncs;
 using System;
-using PhaseSpcaeAlgorithms;
 
 namespace FutureTraj 
 {
@@ -217,10 +216,10 @@ namespace FutureTraj
             */
             
             Vector2 prevPos = a.pos - ((Vector3) a.velocity);
-            if (prevPos.x < a.pos.x.RoundOff((int) (2*agentWidth)) || prevPos.x > a.pos.x.RoundOff((int) (2*agentWidth)))
-            {
+            if (prevPos.x < a.pos.x.RoundOff((int) (2*agentWidth)) || prevPos.x > a.pos.x.RoundOff((int) (2*agentWidth))) {
                 a.velocity.x *= -1;
-            } else if (prevPos.y < a.pos.y.RoundOff((int) (2*agentHeight)) || prevPos.y > a.pos.y.RoundOff((int) (2*agentHeight))) {
+            } 
+            if (prevPos.y < a.pos.y.RoundOff((int) (2*agentHeight)) || prevPos.y > a.pos.y.RoundOff((int) (2*agentHeight))) {
                 a.velocity.y *= -1;
             }
 

@@ -27,8 +27,9 @@ namespace HelperFuncs
 
             foreach(Vector3 v in vs)
             {
-                if (v.x < leftMost.x)
+                if (v.x < leftMost.x) {
                     leftMost = v;
+                }
             }
 
             return leftMost;
