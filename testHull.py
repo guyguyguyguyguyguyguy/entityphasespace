@@ -19,7 +19,8 @@ for i in np.arange(0, len(dfs)-1, 2):
     ax2 = dfs[i].plot.line(x='x', y='y', style='-', c = 'gold', label='hull', linewidth=2, zorder= 1, ax=ax)
     ax2.scatter(dfs[i].iloc[0].x, dfs[i].iloc[0].y, s= 50, alpha = .5, c= 'red', zorder= 3)
     
+    plt.title("df number {}".format(i+1))
     plt.legend()
     plt.show()
 
-dfs[1].to_csv("~/cSharp/convex_hull/test.csv")
+dfs[3].to_csv("~/cSharp/convex_hull/test.csv")

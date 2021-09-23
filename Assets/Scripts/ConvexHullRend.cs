@@ -4,18 +4,12 @@ using UnityEngine;
 
 public class ConvexHullRend : MonoBehaviour
 {
-    public LineRenderer l;
-
+    public Mesh m;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        l = gameObject.GetComponent<LineRenderer>();
-            
-        l.startColor = Color.red;
-        l.endColor = Color.blue;
-        l.startWidth = 1;
-        l.endWidth = 1; 
+        m = new Mesh(); 
     }
 
     // Update is called once per frame

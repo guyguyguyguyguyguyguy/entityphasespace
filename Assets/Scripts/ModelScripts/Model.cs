@@ -16,7 +16,7 @@ public class Model : MonoBehaviour
     private float modelWidth;
     private float modelHeight;
     private bool paused = false;
-    private int predSteps = 100;
+    private int predSteps = 1000;
 
     public List<GameObject> Agents;
     public List<GameObject> Barriers;
@@ -240,34 +240,51 @@ public class Model : MonoBehaviour
 
     private void RenderConvexHull(Vector3[] vs, int id)
     {
-        GameObject hull = GameObject.Find("ConvexHull" + id.ToString());
-        LineRenderer l;
+        GameObject hull = GameObject.Find("ConvexHull " + id.ToString()); 
+        MeshRenderer r;
+        MeshFilter f;
+        Mesh m;
 
-        // This if condition does not work?
         if (hull == null) {
             GameObject newHull = Instantiate(HullPrefab, Vector3.zero, Quaternion.identity) as GameObject;
             newHull.name = "ConvexHull " + id.ToString();
             newHull.transform.parent = this.transform.GetChild(4);
 
-            l = newHull.GetComponent<LineRenderer>();
+            r = newHull.GetComponent<MeshRenderer>();
+            f = newHull.GetComponent<MeshFilter>();
+            m = newHull.GetComponent<ConvexHullRend>().m;
         } else {
-            l = hull.GetComponent<LineRenderer>();
+            r = hull.GetComponent<MeshRenderer>();
+            f = hull.GetComponent<MeshFilter>();
+            m = hull.GetComponent<ConvexHullRend>().m;
+            m.Clear();
         }
 
-        l.positionCount = vs.Length;
-
+        Vector3[] conVs = new Vector3[vs.Length];
+        Vector3 v;
         Vector3 phasePos = phasePositions[id];
-        
+
         for (int i = 0; i < vs.Length; ++i)
         {
-            Vector3 v = vs[i];
+            v = vs[i];
 
             v.x = v.x * 0.092f;
             v.y = v.y * 0.11f;
             v.z = v.z * 0.092f;
 
             v += phasePos; 
-            l.SetPosition(i, v);
+            conVs[i] = v;
         }
+
+        var triangulator = new Triangulator(conVs);
+        var indices = triangulator.Triangulate();
+        var colors = Enumerable.Repeat(new Color(0f, 0.8f, 0.8f, 0.5f), conVs.Length).ToArray();
+
+        m.vertices = conVs;
+        m.triangles = indices;
+        m.colors = colors;
+
+        r.material = new Material(Shader.Find("Sprites/Default"));
+        f.mesh = m;
     }
 }
